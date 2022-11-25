@@ -11,7 +11,7 @@ from format import encode_header, decode_header, encode_kv, decode_kv
 HEADER_SIZE: typing.Final[int] = 0
 
 
-def get_random_header() -> tuple[int, int, int]:
+def get_random_header():# -> tuple[int, int, int]:
     # we use 4 bytes to store the int, so max value cannot be greater than
     # the following
     max_size: int = (2**32) - 1
@@ -19,7 +19,7 @@ def get_random_header() -> tuple[int, int, int]:
     return random_int(), random_int(), random_int()
 
 
-def get_random_kv() -> tuple[int, str, str, int]:
+def get_random_kv():# -> tuple[int, str, str, int]:
     return (
         int(time.time()),
         str(uuid.uuid4()),
