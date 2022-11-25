@@ -38,7 +38,8 @@ For the workshop, the functions will have the following signature:
 import struct
 
 class EntryFormat:
-    FORMAT = 'iii'
+    HEADER_FORMAT = 'III'
+    HEADER_SIZE = 12 # bytes
     def __init__(self):
         self.timestamp
         self.key_size
@@ -46,17 +47,25 @@ class EntryFormat:
 
 def encode_header(timestamp: int, key_size: int, value_size: int) -> bytes:
 
-    return struct.pack(EntryFormat.FORMAT, timestamp, key_size, value_size)
+    return struct.pack(EntryFormat.HEADER_FORMAT, timestamp, key_size, value_size)
 
 def encode_kv(timestamp: int, key: str, value: str):# -> tuple[int, bytes]:
-    raise NotImplementedError
 
+    header_bytes = encode_header(timestamp, len(key), len(value))
+    kv_bytes = struct.pack(f"{len(key)}s{len(value)}s", key.encode(), value.encode())
+    return (len(kv_bytes), header_bytes + kv_bytes)
 
 def decode_kv(data: bytes):# -> tuple[int, str, str]:
-    raise NotImplementedError
 
+    header_bytes = data[:EntryFormat.HEADER_SIZE]
+    data_bytes = data[EntryFormat.HEADER_SIZE:]
+
+    timestamp, key_size, value_size = decode_header(header_bytes)
+
+    decoded = struct.unpack(f"{key_size}s{value_size}s", data_bytes)
+    return (timestamp, decoded[0].decode(), decoded[1].decode())
 
 def decode_header(data: bytes):# -> tuple[int, int, int]:
     
-    decoded = struct.unpack(EntryFormat.FORMAT, data)
+    decoded = struct.unpack(EntryFormat.HEADER_FORMAT, data)
     return (decoded[0], decoded[1], decoded[2])
