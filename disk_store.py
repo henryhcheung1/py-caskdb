@@ -23,7 +23,7 @@ import os.path
 import time
 import typing
 
-from format import encode_kv, decode_kv, decode_header
+from format import encode_kv, decode_kv, decode_header, EntryFormat
 
 
 # DiskStorage is a Log-Structured Hash Table as described in the BitCask paper. We
@@ -52,7 +52,6 @@ from format import encode_kv, decode_kv, decode_header
 #
 # Read the paper for more details: https://riak.com/assets/bitcask-intro.pdf
 
-
 class DiskStorage:
     """
     Implements the KV store on the disk
@@ -63,14 +62,40 @@ class DiskStorage:
             pass the full file location too.
     """
 
+    """
+    file_id     status
+    0           older   
+    1           older
+    2           active
+    """
+
     def __init__(self, file_name: str = "data.db"):
-        raise NotImplementedError
+
+        file_path = path.split(file_name)
+
+        self.db_directory = file_path[0]
+        self.active_filename = file_path[1]
+
+        self.active_file_handle = open(file_name, "ab")
+        self.key_dir = dict()
+        self.active_index = 0
+        self.active_file_id = 0
+
 
     def set(self, key: str, value: str) -> None:
-        raise NotImplementedError
+
+        timestamp = int(time.time())
+        encoded_kv = encode_kv(timestamp, key, value)
+
+        self.active_file_handle.write(encoded_kv[1])
+
+        self.key_dir[key] = (self.active_file_id, len(value.encode()), self.active_index, timestamp)
+        self.active_index += EntryFormat.HEADER_SIZE + encoded_kv[0]
+
 
     def get(self, key: str) -> str:
-        raise NotImplementedError
+
+        
 
     def close(self) -> None:
         raise NotImplementedError
