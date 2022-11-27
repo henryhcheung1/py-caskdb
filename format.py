@@ -57,10 +57,13 @@ def encode_kv(timestamp: int, key: str, value: str):# -> tuple[int, bytes]:
 
 def decode_kv(data: bytes):# -> tuple[int, str, str]:
 
-    header_bytes = data[:EntryFormat.HEADER_SIZE]
-    data_bytes = data[EntryFormat.HEADER_SIZE:]
+    # print(f"decode_kv: data bytes {data}")
 
+    header_bytes = data[:EntryFormat.HEADER_SIZE]
     timestamp, key_size, value_size = decode_header(header_bytes)
+
+    # data_bytes = data[EntryFormat.HEADER_SIZE:]
+    data_bytes = data[EntryFormat.HEADER_SIZE:EntryFormat.HEADER_SIZE + key_size + value_size]
 
     decoded = struct.unpack(f"{key_size}s{value_size}s", data_bytes)
     return (timestamp, decoded[0].decode(), decoded[1].decode())
@@ -68,4 +71,4 @@ def decode_kv(data: bytes):# -> tuple[int, str, str]:
 def decode_header(data: bytes):# -> tuple[int, int, int]:
     
     decoded = struct.unpack(EntryFormat.HEADER_FORMAT, data)
-    return (decoded[0], decoded[1], decoded[2])
+    return (decoded[0], decoded[1], decoded[2]) # timestamp, key size, value size
