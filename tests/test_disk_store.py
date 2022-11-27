@@ -75,10 +75,15 @@ class TestDiskCDB(unittest.TestCase):
             "brave new world": "huxley",
             "dune": "frank herbert",
         }
+
+        print("test_persistence 1")
+
         for k, v in tests.items():
             store.set(k, v)
             self.assertEqual(store.get(k), v)
         store.close()
+
+        print("test_persistence 2")
 
         store = DiskStorage(file_name=self.file.path)
         for k, v in tests.items():

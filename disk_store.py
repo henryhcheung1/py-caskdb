@@ -81,7 +81,7 @@ class DiskStorage:
         file_path = os.path.split(file_name)
 
         self.db_directory = file_path[0]
-        self.active_filename = file_name
+        self.active_file_name = file_name
 
         self.active_file_handle = open(file_name, 'ab')
         # self.active_file_handle = open(file_name, "ab", 0) # flush after file write, (skip buffering)
@@ -90,7 +90,7 @@ class DiskStorage:
         self.active_file_id = 0
 
         # initialize keydir
-        # self.__initialize_keydir()
+        self.__initialize_keydir()
 
 
 
@@ -108,7 +108,7 @@ class DiskStorage:
         self.key_dir[key] = (self.active_file_id, len(value.encode()), self.active_index, timestamp)
 
         # update pointer location in file
-        # self.active_index += EntryFormat.HEADER_SIZE + encoded_kv[0]
+        self.active_index += EntryFormat.HEADER_SIZE + encoded_kv[0]
 
 
 
@@ -122,7 +122,7 @@ class DiskStorage:
         meta = self.key_dir[key]
 
         # find bitcask file that contains most recent key / value
-        filename = self.active_filename
+        filename = self.active_file_name
         if meta[0] == self.active_file_id:
             # value exists in active file, therefore flush active file buffer to disk to allow reading most recent writes
             self.active_file_handle.flush()
@@ -135,22 +135,24 @@ class DiskStorage:
         # read file and search for key / value
         with open(filename, 'rb') as f:
 
-            # print(f"get: from {filename}")
+            print(f"get: from {filename}")
 
             data_bytes = f.read()
 
             # print(f"get: {data_bytes}")
 
-            kv_bytes_start = meta[2]+EntryFormat.HEADER_SIZE
+            # kv_bytes_start = meta[2]+EntryFormat.HEADER_SIZE
 
-            header_bytes = data_bytes[meta[2]:kv_bytes_start]
+            # header_bytes = data_bytes[meta[2]:kv_bytes_start]
 
-            header = decode_header(header_bytes)
-            kv_size_bytes = header[1] + header[2]
+            # header = decode_header(header_bytes)
+            # kv_size_bytes = header[1] + header[2]
 
-            entry_bytes = data_bytes[meta[2]:kv_bytes_start+kv_size_bytes]
+            # entry_bytes = data_bytes[meta[2]:kv_bytes_start+kv_size_bytes]
 
-            kv = decode_kv(entry_bytes)
+            # kv = decode_kv(entry_bytes)
+
+            kv = decode_kv(data_bytes[meta[2]:])
 
         return kv[2]
 
@@ -165,13 +167,21 @@ class DiskStorage:
             # sort all files
             # self.__read_file(filename)
 
+        print("__initialize_keydir")
+
         file_pointer = 0
-        with open(self.active_filename, 'rb') as f:
+        with open(self.active_file_name, 'rb') as f:
             data_bytes = f.read()
 
-        data_bytes[file_pointer]
+        print(data_bytes)
 
-        decode_kv()
+        while file_pointer < len(data_bytes):
+
+            kv = decode_kv(data_bytes[file_pointer:])
+            # print(kv)
+            self.key_dir[kv[1]] = (self.active_file_name, len(kv[2]), file_pointer, kv[0])
+
+            file_pointer += EntryFormat.HEADER_SIZE + len(kv[1]) + len(kv[2])
 
 
 

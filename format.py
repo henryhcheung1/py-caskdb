@@ -65,6 +65,8 @@ def decode_kv(data: bytes):# -> tuple[int, str, str]:
     # data_bytes = data[EntryFormat.HEADER_SIZE:]
     data_bytes = data[EntryFormat.HEADER_SIZE:EntryFormat.HEADER_SIZE + key_size + value_size]
 
+    # print(f"decode_kv: {key_size} {value_size}")
+
     decoded = struct.unpack(f"{key_size}s{value_size}s", data_bytes)
     return (timestamp, decoded[0].decode(), decoded[1].decode())
 
