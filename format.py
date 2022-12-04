@@ -37,6 +37,9 @@ For the workshop, the functions will have the following signature:
 """
 import struct
 
+#TODO:
+    # - Add CRC cyclic redundancy check
+
 class EntryFormat:
     HEADER_FORMAT = 'III'
     HEADER_SIZE = 12 # bytes

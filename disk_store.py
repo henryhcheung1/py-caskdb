@@ -72,9 +72,32 @@ class DiskStorage:
     3           active      data.db
 
     on db initialization, load all keys / values from directory (i.e. /etc/data/)
+
+
+    Merge:
+    When to start merge process?
+        - cron
+        - when init dir size exceeds some threshold
+        - when database is started
+        - manually
+
+    1. sort all files & read files from oldest to newest
+    2. create an in memory hashtable that tracks most recent value of keys & values
+    3. Once all files are processed, write hashtable to file(s).
+        This creates a compaction / reduction of files. Write the hashtable to multiple output
+        files if the hashtable key size exceeds the maximum size per file.
+
+
+    DB Initialization:
+    1. pass in initialization directory containing all data files (active & inactive files)
+    2. sort all data files in init dir and read from oldest to newest
+    3. update key dir. 
+        Delete key if tomebstoned value is encountered.
     """
 
     #TODO: implement legacy bitcask file compaction
+
+    TOMBSTONE = '' # value to set
 
     def __init__(self, file_name: str = "data.db"):
 
@@ -98,7 +121,7 @@ class DiskStorage:
 
         timestamp = int(time.time())
 
-        # serialize key / value to bytes 
+        # serialize key / value to bytes
         encoded_kv = encode_kv(timestamp, key, value)
 
         # append key / value bytes to active file
@@ -157,6 +180,39 @@ class DiskStorage:
         return kv[2]
 
 
+    def delete(self, key: str) -> bool:
+        """
+        Key to delete.
+        Returns true if key exists.
+        Returns false if key does not exist.
+
+        tombstone value format
+        [timestamp, key_size, value_size, key, value]
+        where value is an empty string with value size of length 0
+        This assumes keys should not have empty strings for values
+        """
+
+        # 1. Remove key from key_dir
+        # 2. Write tombstone value to active data file
+        # Note: 
+        #   - Once merge process begins, most recent tombstoned keys are not added to keydir
+        #   - Also on DB initialization, do not store most recent tombstoned keys in keydir
+
+        if key not in self.key_dir:
+            # key not found
+            return False
+
+        # remove existing key
+        del self.key_dir[key]
+
+        timestamp = int(time.time())
+        encoded_kv = encode_kv(timestamp, key, '')
+
+        self.active_file_handle.write(encoded_kv[1])
+
+        return True
+
+
     def close(self) -> None:
 
         self.active_file_handle.close()
@@ -167,7 +223,7 @@ class DiskStorage:
             # sort all files
             # self.__read_file(filename)
 
-        print("__initialize_keydir")
+        # print("__initialize_keydir")
 
         file_pointer = 0
         with open(self.active_file_name, 'rb') as f:
@@ -179,7 +235,13 @@ class DiskStorage:
 
             kv = decode_kv(data_bytes[file_pointer:])
             # print(kv)
-            self.key_dir[kv[1]] = (self.active_file_name, len(kv[2]), file_pointer, kv[0])
+
+            if kv[1] in self.key_dir and kv[2] == DiskStorage.TOMBSTONE:
+                # tombstone value found in db file, this indicates a key deletion, therefore delete from keydir
+                del self.key_dir[kv[1]]
+
+            else:
+                self.key_dir[kv[1]] = (self.active_file_name, len(kv[2]), file_pointer, kv[0])
 
             file_pointer += EntryFormat.HEADER_SIZE + len(kv[1]) + len(kv[2])
 

@@ -5,6 +5,7 @@ import unittest
 
 from disk_store import DiskStorage
 
+# TODO: Add bitcask delete tests
 
 class TempStorageFile:
     """
@@ -90,6 +91,21 @@ class TestDiskCDB(unittest.TestCase):
             self.assertEqual(store.get(k), v)
         store.close()
 
+    def test_delete(self) -> None:
+        store = DiskStorage(file_name=self.file.path)
+        store.set("name", "jojo")
+
+        self.assertEqual(store.delete("name"), True)
+        self.assertEqual(store.get("name"), '')
+        store.close()
+
+    def test_delete_invalid_key(self) -> None:
+        store = DiskStorage(file_name=self.file.path)
+        self.assertEqual(store.delete("name"), False)
+        store.close()
+
+    # def test_delete_persistence():
+
 
 class TestDiskCDBExistingFile(unittest.TestCase):
     def test_get_new_file(self) -> None:
@@ -104,3 +120,4 @@ class TestDiskCDBExistingFile(unittest.TestCase):
         self.assertEqual(store.get("name"), "jojo")
         store.close()
         t.clean_up()
+
