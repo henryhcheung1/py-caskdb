@@ -77,14 +77,10 @@ class TestDiskCDB(unittest.TestCase):
             "dune": "frank herbert",
         }
 
-        print("test_persistence 1")
-
         for k, v in tests.items():
             store.set(k, v)
             self.assertEqual(store.get(k), v)
         store.close()
-
-        print("test_persistence 2")
 
         store = DiskStorage(file_name=self.file.path)
         for k, v in tests.items():
@@ -104,8 +100,34 @@ class TestDiskCDB(unittest.TestCase):
         self.assertEqual(store.delete("name"), False)
         store.close()
 
-    # def test_delete_persistence():
+    def test_delete_persistence(self) -> None:
+        store = DiskStorage(file_name=self.file.path)
 
+        tests = {
+            "crime and punishment": "dostoevsky",
+            "anna karenina": "tolstoy",
+            "war and peace": "tolstoy",
+            "hamlet": "shakespeare",
+            "othello": "shakespeare",
+            "brave new world": "huxley",
+            "dune": "frank herbert",
+        }
+
+        for k, v in tests.items():
+            store.set(k, v)
+
+        _ = store.delete("crime and punishment")
+        _ = store.delete("anna karenina")
+        _ = store.delete("war and peace")
+        tests["crime and punishment"] = ''
+        tests["anna karenina"] = ''
+        tests["war and peace"] = ''
+        store.close()
+
+        store = DiskStorage(file_name=self.file.path)
+        for k, v in tests.items():
+            self.assertEqual(store.get(k), v)
+        store.close()
 
 class TestDiskCDBExistingFile(unittest.TestCase):
     def test_get_new_file(self) -> None:
