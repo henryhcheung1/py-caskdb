@@ -1,5 +1,15 @@
 # CDB - Disk based Log Structured Hash Table Store
 
+Complete:
+- Key deletion: CaskDB does not have a delete API. Read the paper and implement it
+
+
+References:
+- Database storage engines: https://shashankbaravani.medium.com/database-storage-engines-under-the-hood-705418dc0e35
+- LSM tree with sparse index & bloom filter: https://yetanotherdevblog.com/lsm/
+- Red Black Tree: https://brilliant.org/wiki/red-black-tree/
+
+
 ![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)
 [![build](https://github.com/avinassh/cdb/actions/workflows/build.yml/badge.svg)](https://github.com/avinassh/cdb/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/avinassh/cdb/branch/master/graph/badge.svg?token=9SA8Q4L7AZ)](https://codecov.io/gh/avinassh/cdb)

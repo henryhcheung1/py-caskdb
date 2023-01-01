@@ -99,6 +99,8 @@ class DiskStorage:
 
     TOMBSTONE = '' # value to set
 
+    # dictionary implementation
+
     def __init__(self, file_name: str = "data.db"):
 
         file_path = os.path.split(file_name)
